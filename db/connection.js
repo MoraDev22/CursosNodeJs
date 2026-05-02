@@ -7,7 +7,7 @@ const db = mysql.createConnection(
         password: '',
         database: 'cursos'
     }
-);
+).promise();
 
 db.connect( err => {
     if (err) throw err;

@@ -3,72 +3,91 @@ class EstudiantesController {
 
     constructor(){}
 
-    consultStudent(req,res){
+    async consultStudent(req,res){
         try{
             const { id } = req.params;
-            db.query(
-                `SELECT * FROM students WHERE idStudent = ?`, [id], ( err,rows ) => {
-                if (err) return res.status(400).send(err.message);
-                return res.status(201).json(rows[0])
+            const [rows] = await db.query(
+                `SELECT * FROM students WHERE idStudent = ?;`, [id]
+            );
+
+            if(rows.length == 0){
+                return res.status(400).json({message: `No existe el alumno con id: ${id} en la base de datos`});
+            }
+
+            return res.status(201).json({
+                message : "Alumno encontrado",
+                data: rows
             });
+
         } catch (err) {
             res.status(500).send(err.message);
         }
     }
 
-    consultStudents(req,res){
+    async consultStudents(req,res){
         try{
-            db.query(
-                `SELECT * FROM students;`, ( err,rows ) => {
-                    if (err) return res.status(400).send(err.message);
-                    
-                    return res.status(201).json(rows);
-                });
-        } catch(err) {
-            res.status(500).send(err.message) 
+            const [rows] = await db.query(
+                `SELECT * FROM students;`
+            );
+
+            if(rows.length == 0){
+                return res.status(404).json({message: "No existen alumnos registrados en la base de datos"});
+            }
+
+            return res.status(200).json(rows);
+
+        } catch (err) {
+            res.status(500).send(err.message);
         }
     }
     
-    insertStudent(req,res){
+    async insertStudent(req,res){
         try{
             const { dni, name, surname, email } = req.body;
-            db.query(
-            `INSERT INTO cursos.students 
-                (idStudent, dni, name, surname, email)
-                VALUES (NULL, ?, ?, ?, ?);`,[dni, name, surname, email], ( err,rows ) => {
-                if (err) return res.status(400).send(err.message);
-                if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Student"});
-            });
+            const [data] = await db.query(
+                `INSERT INTO cursos.students 
+                    (idStudent, dni, name, surname, email)
+                        VALUES (NULL, ?, ?, ?, ?);`,[dni, name, surname, email]
+            );
+            if(data.affectedRows == 0) return res.status(400).json(
+                {
+                    message : "No se pudo registrar el alumno a la base de datos"
+                }
+            );
 
+            if(data.insertId) return res.status(400).json({message: "Alumno registrado exitosamente"});
         } catch(err){
             res.status(500).send(err.message);
         }
     }
 
-    updateStudent(req,res){
-        const { id } = req.params;
+    async updateStudent(req,res){
         try{
+            const { id } = req.params;
             const { dni, name, surname, email } = req.body;
-            db.query( 
-                `UPDATE students SET dni = ?, name = ?, surname = ?, email = ? WHERE idStudent = ?;`,
-                [ dni, name, surname, email, id ], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.affectedRows == 1) return res.status(201).json({message: "Updated Student"});
-                });
+            const [data] = await db.query( 
+                `UPDATE students
+                    SET dni = ?, name = ?, surname = ?, email = ? WHERE idStudent = ?;`,
+                    [ dni, name, surname, email, id ]); 
+
+            if (data.affectedRows == 0) return res.status(400).json({message: `No existe el estudiante con id ${id}`});
+            
+            return res.status(201).json({message: "Datos del alumno actualizado correctamente"});
         } catch(err) {
             res.status(500).send(err.message);
         }
     }
 
-    deleteStudent(req,res){
-        const { id } = req.params;
+    async deleteStudent(req,res){
         try{
-            db.query( 
-                `DELETE FROM students WHERE idStudent = ?`,
-                [ id ], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.affectedRows == 1) return res.status(201).json({message: "Eliminated Student"});
-                });
+            const { id } = req.params;
+            const [data] = await db.query( 
+                `DELETE FROM students WHERE idStudent = ?`, [ id ]
+            );
+
+            if(data.affectedRows == 0) return res.status(400).json({message: `No existe el alumno con id ${id}`});
+            
+            return res.status(200).json({message: "Alumno eliminado correctamente"});
         } catch(err) {
             res.status(500).send(err.message);
         }
