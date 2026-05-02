@@ -9,8 +9,8 @@ class CursosController {
             const { id } = req.params;
             db.query(
                 `SELECT * FROM course WHERE idCourse = ?;`, [id], ( err, data ) => {
-                if (err) res.status(400).send(err);
-                res.status(201).json(data[0]);
+                if (err) return res.status(400).send(err.message);
+                return res.status(201).json(data[0]);
             });
         } catch (err) {
             res.status(500).send(err.message);
@@ -21,8 +21,8 @@ class CursosController {
         try{
             db.query(
                 `SELECT * FROM course;`, (err,data) => {
-                if (err) res.status(400).send(err);
-                res.status(201).json(data[0]);
+                if (err) return res.status(400).send(err.message);
+                return res.status(201).json(data[0]);
             });
         } catch (err) {
             res.status(500).send(err.message);
@@ -34,19 +34,35 @@ class CursosController {
             const { idProfessor, name, description } = req.body;
             db.query(
                 `SELECT * FROM professors WHERE idProfessor = ?;`, [idProfessor], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.length === 0) res.status(400).json({error: "Professor does not exist in the professor table"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.length === 0) return res.status(400).json({error: "Professor does not exist in the professor table"});
 
                     db.query(
                         `INSERT INTO course 
                             (idProfessor, name, description)
                             VALUES (?, ?, ?);`,[idProfessor, name, description], ( err,rows ) => {
-                            if (err) res.status(400).send(err);
-                            if (rows.affectedRows == 1) res.status(201).json({message: "Inserted Course"});
+                            if (err) return res.status(400).send(err.message);
+                            if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Course"});
                     });
 
                 }
             );
+
+        } catch(err){
+            res.status(500).send(err.message);
+        }
+    }
+
+    associateStudent (req,res){
+        try{
+            const { idCourse, idStudent } = req.body;
+            
+            db.query(
+                    `INSERT INTO student_course 
+                        (idCourse, idStudent) VALUES (?, ?);`,[idCourse,idStudent], ( err,rows ) => {
+                            if (err) return res.status(400).send(err.message);
+                            if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Student Course"});
+                    });
 
         } catch(err){
             res.status(500).send(err.message);
@@ -60,8 +76,8 @@ class CursosController {
             db.query( 
                 `UPDATE course SET idProfessor = ?, name = ?, description = ? WHERE idCourse = ?;`,
                 [ idProfessor, name, description, id ], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.affectedRows == 1) res.status(201).json({message: "Updated Course"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.affectedRows == 1) return res.status(201).json({message: "Updated Course"});
                 });
         } catch(err) {
             res.status(500).send(err.message);
@@ -74,8 +90,8 @@ class CursosController {
             db.query( 
                 `DELETE FROM course WHERE idCourse = ?`,
                 [ id ], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.affectedRows == 1) res.status(201).json({message: "Eliminated Course"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.affectedRows == 1) return res.status(201).json({message: "Eliminated Course"});
                 });
         } catch(err) {
             res.status(500).send(err.message);

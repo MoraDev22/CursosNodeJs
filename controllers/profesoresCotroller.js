@@ -5,18 +5,18 @@ class ProfessorsController{
     constructor(){};
 
     consultProfessor(req,res){
-        const { id } = req.params;
         try{
+            const { id } = req.params;
             db.query(
                 `SELECT * FROM professors WHERE idProfessor = ?;`, [id],
                 (err, data) => {
-                    if ( err ) res.status(400).send(err);
+                    if ( err ) return res.status(400).send(err.message);
 
-                    res.status(201).json(data);
+                    return res.status(201).json(data);
                 }
             );
         }catch (e){
-            res.status(500).send(err.message)
+            res.status(500).send(e.message)
         }
     }
 
@@ -24,45 +24,45 @@ class ProfessorsController{
         try{
             db.query(
                 `SELECT * FROM professors;`, (err, data) => {
-                    if(err) res.status(400).send(err);
-                    res.status(201).json(data);
+                    if(err) return res.status(400).send(err.message);
+                    return res.status(201).json(data);
                 }
             );
         }catch(e){
-            res.status(500).send(err.message);
+            res.status(500).send(e.message);
         }
     }
 
     insertProfessor(req, res){
-        const { dni, name, surname, email, profession } = req.body;
         try{
+            const { dni, name, surname, email, profession } = req.body;
             db.query(
                 `INSERT INTO cursos.professors
                 (idProfessor, dni, name, surname, email, profession)
-                VALUES (null, ?, ?, ?, ?, ?);`, [dni, name, surname, email, profession], (err, data) => {
+                VALUES (null, ?, ?, ?, ?, ?);`, [dni, name, surname, email, profession], (err, rows) => {
                         
-                    if(err) res.status(400).send(err);
+                    if(err) return res.status(400).send(err.message);
                         
-                    if(rows.affectedRows == 1) res.status(200).json({message: "Inserted Professor"});
+                    if(rows.affectedRows == 1) return res.status(200).json({message: "Inserted Professor"});
                                           }
             );
         }catch(e){
-            res.status(500).send(err.message);
+            res.status(500).send(e.message);
         }
     }
 
     updateProfessor(req, res){
-        const { id } = req.params;
         try{
+            const { id } = req.params;
             const { dni, name, surname, email, profession } = req.body;
 
             db.query(
                 `UPDATE professors SET dni = ?, name = ?, surname = ?, email = ?, profession = ?
-                    WHERE idProfessor = ?;`,[ dni, name, surname, email, profession , id], (error, rows) => {
-                        
-                        if(error) res.status(400).send(err);
+                    WHERE idProfessor = ?;`,[ dni, name, surname, email, profession , id], (err, rows) => {
+                    
+                        if(err) return res.status(400).send(err.message);
 
-                        if(rows.affectedRows == 1) res.status(200).json({message: "Updated Professor"});
+                        if(rows.affectedRows == 1) return res.status(200).json({message: "Updated Professor"});
                     }
             );
         } catch(e){
@@ -70,15 +70,15 @@ class ProfessorsController{
         }
     }
     deleteProfessor(req, res){
-        const { id } = req.params;
         try{
+            const { id } = req.params;
             db.query( 
                 `DELETE FROM professors WHERE idProfessor = ?;`, [ id ], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.affectedRows == 1) res.status(201).json({message : "Eliminated Professor"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.affectedRows == 1) return res.status(201).json({message : "Eliminated Professor"});
                 });
-        } catch(err) {
-            res.status(500).send(err.message);
+        } catch(e) {
+            res.status(500).send(e.message);
         }
     }
 }

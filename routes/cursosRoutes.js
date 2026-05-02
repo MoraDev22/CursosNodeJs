@@ -6,6 +6,7 @@ const { ValidateCourseData} = require('../Middlewares/ValidateData.js');
 
 router.post('/', ValidateCourseData ,cursosController.insertCourse);
 router.get('/', cursosController.consultCourses);
+router.post('/asociarEstudiante', cursosController.associateStudent);
 
 //router.route devuelve un objeto de tipo Route (Ruta lista para asignarle métodos HTTP)
 router.route("/:id")

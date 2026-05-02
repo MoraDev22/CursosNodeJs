@@ -8,8 +8,8 @@ class EstudiantesController {
             const { id } = req.params;
             db.query(
                 `SELECT * FROM students WHERE idStudent = ?`, [id], ( err,rows ) => {
-                if (err) res.status(400).send(err);
-                res.status(201).json(rows[0])
+                if (err) return res.status(400).send(err.message);
+                return res.status(201).json(rows[0])
             });
         } catch (err) {
             res.status(500).send(err.message);
@@ -20,9 +20,9 @@ class EstudiantesController {
         try{
             db.query(
                 `SELECT * FROM students;`, ( err,rows ) => {
-                    if (err) res.status(400).send(err);
+                    if (err) return res.status(400).send(err.message);
                     
-                    res.status(201).json(rows);
+                    return res.status(201).json(rows);
                 });
         } catch(err) {
             res.status(500).send(err.message) 
@@ -36,8 +36,8 @@ class EstudiantesController {
             `INSERT INTO cursos.students 
                 (idStudent, dni, name, surname, email)
                 VALUES (NULL, ?, ?, ?, ?);`,[dni, name, surname, email], ( err,rows ) => {
-                if (err) res.status(400).send(err);
-                if (rows.affectedRows == 1) res.status(201).json({message: "Inserted Student"});
+                if (err) return res.status(400).send(err.message);
+                if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Student"});
             });
 
         } catch(err){
@@ -52,8 +52,8 @@ class EstudiantesController {
             db.query( 
                 `UPDATE students SET dni = ?, name = ?, surname = ?, email = ? WHERE idStudent = ?;`,
                 [ dni, name, surname, email, id ], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.affectedRows == 1) res.status(201).json({message: "Updated Student"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.affectedRows == 1) return res.status(201).json({message: "Updated Student"});
                 });
         } catch(err) {
             res.status(500).send(err.message);
@@ -66,8 +66,8 @@ class EstudiantesController {
             db.query( 
                 `DELETE FROM students WHERE idStudent = ?`,
                 [ id ], (err, rows) => {
-                    if (err) res.status(400).send(err);
-                    if (rows.affectedRows == 1) res.status(201).json({message: "Eliminated Student"});
+                    if (err) return res.status(400).send(err.message);
+                    if (rows.affectedRows == 1) return res.status(201).json({message: "Eliminated Student"});
                 });
         } catch(err) {
             res.status(500).send(err.message);
