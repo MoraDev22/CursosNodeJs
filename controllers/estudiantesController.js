@@ -10,11 +10,11 @@ class EstudiantesController {
                 `SELECT * FROM students WHERE idStudent = ?;`, [id]
             );
 
-            if(rows.length == 0){
-                return res.status(400).json({message: `No existe el alumno con id: ${id} en la base de datos`});
+            if(rows.length === 0){
+                return res.status(404).json({message: `No existe el alumno con id: ${id} en la base de datos`});
             }
 
-            return res.status(201).json({
+            return res.status(200).json({
                 message : "Alumno encontrado",
                 data: rows
             });
@@ -49,15 +49,20 @@ class EstudiantesController {
                     (idStudent, dni, name, surname, email)
                         VALUES (NULL, ?, ?, ?, ?);`,[dni, name, surname, email]
             );
-            if(data.affectedRows == 0) return res.status(400).json(
+
+            return res.status(201).json(
                 {
-                    message : "No se pudo registrar el alumno a la base de datos"
+                    message: "Alumno registrado exitosamente",
+                    id: data.insertId
+                });
+
+        } catch(err){
+            res.status(500).json(
+                {
+                    header: "No se pudo ingresar el estudiante en la base de datos",
+                    message: err.message
                 }
             );
-
-            if(data.insertId) return res.status(400).json({message: "Alumno registrado exitosamente"});
-        } catch(err){
-            res.status(500).send(err.message);
         }
     }
 
@@ -69,8 +74,8 @@ class EstudiantesController {
                 `UPDATE students
                     SET dni = ?, name = ?, surname = ?, email = ? WHERE idStudent = ?;`,
                     [ dni, name, surname, email, id ]); 
-
-            if (data.affectedRows == 0) return res.status(400).json({message: `No existe el estudiante con id ${id}`});
+            
+            if (data.affectedRows == 0) return res.status(404).json({message: `No existe el estudiante con id ${id}`});
             
             return res.status(201).json({message: "Datos del alumno actualizado correctamente"});
         } catch(err) {
@@ -85,7 +90,7 @@ class EstudiantesController {
                 `DELETE FROM students WHERE idStudent = ?`, [ id ]
             );
 
-            if(data.affectedRows == 0) return res.status(400).json({message: `No existe el alumno con id ${id}`});
+            if(data.affectedRows == 0) return res.status(404).json({message: `No existe el alumno con id ${id}`});
             
             return res.status(200).json({message: "Alumno eliminado correctamente"});
         } catch(err) {

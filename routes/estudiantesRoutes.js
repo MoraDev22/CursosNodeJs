@@ -11,7 +11,7 @@ router.get('/', estudiantesController.consultStudents);
 router.route("/:id")
     .get(estudiantesController.consultStudent)
     
-    .put(estudiantesController.updateStudent)
+    .put(ValidateStudentData,estudiantesController.updateStudent)
     
     .delete(estudiantesController.deleteStudent)
 

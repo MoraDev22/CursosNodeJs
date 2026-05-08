@@ -11,7 +11,7 @@ router.get('/', profesoresController.consultProfessors);
 //router.route devuelve un objeto de tipo Route (Ruta lista para asignarle métodos HTTP)
 router.route("/:id")
     .get(profesoresController.consultProfessor)
-    .put(profesoresController.updateProfessor)
+    .put(ValidateProfessorData,profesoresController.updateProfessor)
     .delete(profesoresController.deleteProfessor)
 
 module.exports = router;

@@ -4,95 +4,144 @@ class CursosController {
 
     constructor(){}
 
-    consultCourse(req,res){
+    async consultCourse(req,res){
         try{
             const { id } = req.params;
-            db.query(
-                `SELECT * FROM course WHERE idCourse = ?;`, [id], ( err, data ) => {
-                if (err) return res.status(400).send(err.message);
-                return res.status(201).json(data[0]);
+            const [rows] = await db.query(
+                `SELECT * FROM course WHERE idCourse = ?;`, [id]
+            );
+
+            if(rows.length == 0){
+                return res.status(404).json({message: `No existe el curso con id: ${id} en la base de datos`});
+            }
+
+            return res.status(201).json({
+                message : "Curso encontrado",
+                data: rows
             });
+
         } catch (err) {
             res.status(500).send(err.message);
         }
     }
 
-    consultCourses(req,res){
+    async consultCourses(req,res){
         try{
-            db.query(
-                `SELECT * FROM course;`, (err,data) => {
-                if (err) return res.status(400).send(err.message);
-                return res.status(201).json(data[0]);
-            });
+            const [rows] = await db.query(
+                `SELECT * FROM course;`
+            );
+
+            if(rows.length == 0){
+                return res.status(404).json({message: "No existen cursos registrados en la base de datos"});
+            }
+
+            return res.status(200).json(rows);
+
         } catch (err) {
             res.status(500).send(err.message);
         }
     }
     
-    insertCourse (req,res){
+    async insertCourse (req,res){
         try{
             const { idProfessor, name, description } = req.body;
-            db.query(
-                `SELECT * FROM professors WHERE idProfessor = ?;`, [idProfessor], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.length === 0) return res.status(400).json({error: "Professor does not exist in the professor table"});
 
-                    db.query(
+            const [result] = await db.query(
                         `INSERT INTO course 
                             (idProfessor, name, description)
-                            VALUES (?, ?, ?);`,[idProfessor, name, description], ( err,rows ) => {
-                            if (err) return res.status(400).send(err.message);
-                            if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Course"});
-                    });
+                            VALUES (?, ?, ?);`,[idProfessor, name, description]);
 
+            return res.status(201).json(
+                {
+                    message: "Curso insertado",
+                    id: result.insertId
                 }
             );
 
         } catch(err){
+
+            if(err.code == "ER_NO_REFERENCED_ROW_2") return res.status(404).json(
+                {
+                    message: "El profesor no existe en la base de datos"
+                }
+            );
+
+            if(err.code == "ER_DUP_ENTRY") return res.status(409).json({
+                message: "Registro Duplicado. El registro con esos datos ya existen en la base de datos"
+            });
+            
             res.status(500).send(err.message);
         }
     }
 
-    associateStudent (req,res){
+     async associateStudent (req,res){
         try{
             const { idCourse, idStudent } = req.body;
             
-            db.query(
-                    `INSERT INTO student_course 
-                        (idCourse, idStudent) VALUES (?, ?);`,[idCourse,idStudent], ( err,rows ) => {
-                            if (err) return res.status(400).send(err.message);
-                            if (rows.affectedRows == 1) return res.status(201).json({message: "Inserted Student Course"});
-                    });
-
+            const [result] = await db.query(
+                    `INSERT INTO student_course (idCourse, idStudent) VALUES (?, ?);`,[idCourse,idStudent]);
+            
+            
+            return res.status(201).json(
+                {
+                    message: "Registro insertado correctamente en la base de datos",
+                    id: result.insertId
+                }
+            );
         } catch(err){
-            res.status(500).send(err.message);
+
+            if(err.code === "ER_NO_REFERENCED_ROW_2"){
+                return res.status(404).json(
+                    {
+                        message: "El curso o alumno no existen en la base de datos."
+                    }
+                );
+            }
+
+            if(err.code === "ER_DUP_ENTRY") return res.status(409).json({
+                message: "Registro Duplicado. El registro con esos datos ya existen en la base de datos"
+            });
+
+            return res.status(500).send(err);
         }
     }
 
-    updateCourse(req,res){
+    async updateCourse(req,res){
         try{
             const { id } = req.params;
             const { idProfessor, name, description } = req.body;
-            db.query( 
+
+            const [result] = await db.query( 
                 `UPDATE course SET idProfessor = ?, name = ?, description = ? WHERE idCourse = ?;`,
-                [ idProfessor, name, description, id ], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.affectedRows == 1) return res.status(201).json({message: "Updated Course"});
-                });
+                [ idProfessor, name, description, id ]);
+                    
+            if (result.affectedRows == 0) return res.status(404).json({message: `No existe el curso con id ${id} `});
+            
+            return res.status(201).json({message: "Curso actualizado correctamente"});
+
         } catch(err) {
+            if(err.code === "ER_NO_REFERENCED_ROW_2"){
+                return res.status(404).json(
+                    {
+                        message: `El profesor no existe en la tabla profesor`
+                    }
+                );
+            }
             res.status(500).send(err.message);
         }
     }
-
-    deleteCourse(req,res){
+    
+    async deleteCourse(req,res){
         try{
             const { id } = req.params;
-            db.query( 
-                `DELETE FROM course WHERE idCourse = ?`,
-                [ id ], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.affectedRows == 1) return res.status(201).json({message: "Eliminated Course"});
-                });
+            const [data] = await db.query( 
+                `DELETE FROM course WHERE idCourse = ?`, [ id ]
+            );
+            
+            if (data.affectedRows == 0) return res.status(404).json({message: `No existe el curso con id ${id}`});
+
+            return res.status(201).json({message: "Curso eliminado correctamente"});
+
         } catch(err) {
             res.status(500).send(err.message);
         }

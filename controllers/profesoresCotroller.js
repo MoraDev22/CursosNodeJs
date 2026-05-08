@@ -4,81 +4,93 @@ class ProfessorsController{
 
     constructor(){};
 
-    consultProfessor(req,res){
+    async consultProfessor(req,res){
         try{
             const { id } = req.params;
-            db.query(
-                `SELECT * FROM professors WHERE idProfessor = ?;`, [id],
-                (err, data) => {
-                    if ( err ) return res.status(400).send(err.message);
-
-                    return res.status(201).json(data);
-                }
+            const [rows] = await db.query(
+                `SELECT * FROM professors WHERE idProfessor = ?;`, [id]
             );
-        }catch (e){
-            res.status(500).send(e.message)
+
+            if(rows.length == 0) return res.status(404).json({message: `No existe el profesor con id: ${id} en la base de datos`});
+
+            return res.status(200).json({
+                message : "Profesor encontrado",
+                data: rows
+            });
+
+        } catch (err) {
+            res.status(500).send(err.message);
         }
     }
 
-    consultProfessors(req, res){
+    async consultProfessors(req, res){
         try{
-            db.query(
-                `SELECT * FROM professors;`, (err, data) => {
-                    if(err) return res.status(400).send(err.message);
-                    return res.status(201).json(data);
-                }
+            const [rows] = await db.query(
+                `SELECT * FROM professors;`
             );
-        }catch(e){
-            res.status(500).send(e.message);
+
+            if(rows.length == 0){
+                return res.status(404).json({message: "No existen profesores registrados en la base de datos"});
+            }
+
+            return res.status(200).json(rows);
+
+        } catch (err) {
+            res.status(500).send(err.message);
         }
     }
 
-    insertProfessor(req, res){
+    async insertProfessor(req, res){
         try{
             const { dni, name, surname, email, profession } = req.body;
-            db.query(
-                `INSERT INTO cursos.professors
-                (idProfessor, dni, name, surname, email, profession)
-                VALUES (null, ?, ?, ?, ?, ?);`, [dni, name, surname, email, profession], (err, rows) => {
-                        
-                    if(err) return res.status(400).send(err.message);
-                        
-                    if(rows.affectedRows == 1) return res.status(200).json({message: "Inserted Professor"});
-                                          }
+            const [data] = await db.query(
+                `INSERT INTO cursos.professors 
+                    (idProfessor, dni, name, surname, email, profession)
+                        VALUES (NULL, ?, ?, ?, ?, ?);`,[ dni, name, surname, email, profession ]
             );
-        }catch(e){
-            res.status(500).send(e.message);
-        }
-    }
 
-    updateProfessor(req, res){
-        try{
-            const { id } = req.params;
-            const { dni, name, surname, email, profession } = req.body;
-
-            db.query(
-                `UPDATE professors SET dni = ?, name = ?, surname = ?, email = ?, profession = ?
-                    WHERE idProfessor = ?;`,[ dni, name, surname, email, profession , id], (err, rows) => {
-                    
-                        if(err) return res.status(400).send(err.message);
-
-                        if(rows.affectedRows == 1) return res.status(200).json({message: "Updated Professor"});
-                    }
-            );
-        } catch(e){
-            res.status(500).send(e.message);    
-        }
-    }
-    deleteProfessor(req, res){
-        try{
-            const { id } = req.params;
-            db.query( 
-                `DELETE FROM professors WHERE idProfessor = ?;`, [ id ], (err, rows) => {
-                    if (err) return res.status(400).send(err.message);
-                    if (rows.affectedRows == 1) return res.status(201).json({message : "Eliminated Professor"});
+            return res.status(201).json(
+                {
+                    message: "Profesor registrado exitosamente",
+                    id: data.insertId
                 });
-        } catch(e) {
-            res.status(500).send(e.message);
+                
+        } catch(err){
+            res.status(500).json({
+                header: "No se pudo registrar el profesor a la base de datos",
+                message: err.message
+            });
+        }
+    }
+
+    async updateProfessor(req, res){
+        try{
+            const { id } = req.params;
+            const { dni, name, surname, email, profession } = req.body;
+            const [data] = await db.query( 
+                `UPDATE professors
+                    SET dni = ?, name = ?, surname = ?, email = ?, profession = ? WHERE idProfessor = ?;`,
+                    [ dni, name, surname, email, profession, id ]); 
+
+            if (data.affectedRows == 0) return res.status(404).json({message: `No existe el profesor con id ${id}`});
+            
+            return res.status(201).json({message: "Datos del profesor actualizado correctamente"});
+        } catch(err) {
+            res.status(500).send(err.message);
+        }
+    }
+    async deleteProfessor(req, res){
+        try{
+            const { id } = req.params;
+            const [data] = await db.query( 
+                `DELETE FROM professors WHERE idProfessor = ?`, [ id ]
+            );
+
+            if(data.affectedRows == 0) return res.status(404).json({message: `No existe el profesor con id ${id}`});
+            
+            return res.status(200).json({message: "Profesor eliminado correctamente"});
+        } catch(err) {
+            res.status(500).send(err.message);
         }
     }
 }
